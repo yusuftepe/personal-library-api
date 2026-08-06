@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Kitap Kütüphanem</title>
+<style>
+  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
+    h1 { font-size: 22px; }
+      form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+        input, select, button { padding: 8px; font-size: 14px; }
+          button { cursor: pointer; }
+            .book { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+              .book-info b { display: block; }
+                .delete-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 6px 10px; }
+                </style>
+                </head>
+                <body>
+
+                <h1>📚 Kitap Kütüphanem</h1>
+
+                <form id="bookForm">
+                  <input type="text" id="title" placeholder="Kitap adı" required>
+                    <input type="text" id="author" placeholder="Yazar" required>
+                      <input type="text" id="genre" placeholder="Tür (Roman, Bilim vb.)">
+                        <select id="status">
+                            <option value="TO_READ">Okunacak</option>
+                                <option value="READING">Okunuyor</option>
+                                    <option value="READ">Okundu</option>
+                                      </select>
+                                        <button type="submit">Kitap Ekle</button>
+                                        </form>
+
+                                        <div id="bookList"></div>
+
+                                        <script>
+                                        async function loadBooks() {
+                                          const res = await fetch('/books');
+                                            const books = await res.json();
+                                              const list = document.getElementById('bookList');
+                                                list.innerHTML = '';
+                                                  books.forEach(book => {
+                                                      const div = document.createElement('div');
+                                                          div.className = 'book';
+                                                              div.innerHTML = `
+                                                                    <div class="book-info">
+                                                                            <b>${book.title}</b>
+                                                                                    ${book.author} — ${book.genre || '-'} — ${book.status}
+                                                                                          </div>
+                                                                                                <button class="delete-btn" onclick="deleteBook(${book.id})">Sil</button>
+                                                                                                    `;
+                                                                                                        list.appendChild(div);
+                                                                                                          });
+                                                                                                          }
+
+                                                                                                          async function deleteBook(id) {
+                                                                                                            await fetch('/books/' + id, { method: 'DELETE' });
+                                                                                                              loadBooks();
+                                                                                                              }
+
+                                                                                                              document.getElementById('bookForm').addEventListener('submit', async (e) => {
+                                                                                                                e.preventDefault();
+                                                                                                                  const book = {
+                                                                                                                      title: document.getElementById('title').value,
+                                                                                                                          author: document.getElementById('author').value,
+                                                                                                                              genre: document.getElementById('genre').value,
+                                                                                                                                  status: document.getElementById('status').value
+                                                                                                                                    };
+                                                                                                                                      await fetch('/books', {
+                                                                                                                                          method: 'POST',
+                                                                                                                                              headers: { 'Content-Type': 'application/json' },
+                                                                                                                                                  body: JSON.stringify(book)
+                                                                                                                                                    });
+                                                                                                                                                      document.getElementById('bookForm').reset();
+                                                                                                                                                        loadBooks();
+                                                                                                                                                        });
+
+                                                                                                                                                        loadBooks();
+                                                                                                                                                        </script>
+
+                                                                                                                                                        </body>
+                                                                                                                                                        </html>
