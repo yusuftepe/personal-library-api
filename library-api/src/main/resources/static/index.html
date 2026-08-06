@@ -12,70 +12,133 @@
             .book { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
               .book-info b { display: block; }
                 .delete-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 6px 10px; }
-                </style>
-                </head>
-                <body>
+                  #loginBox { border: 1px solid #ccc; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
+                    #appBox { display: none; }
+                      #logoutBtn { background: #555; color: white; border: none; border-radius: 4px; padding: 6px 10px; margin-bottom: 16px; }
+                      </style>
+                      </head>
+                      <body>
 
-                <h1>📚 Kitap Kütüphanem</h1>
+                      <h1>📚 Kitap Kütüphanem</h1>
 
-                <form id="bookForm">
-                  <input type="text" id="title" placeholder="Kitap adı" required>
-                    <input type="text" id="author" placeholder="Yazar" required>
-                      <input type="text" id="genre" placeholder="Tür (Roman, Bilim vb.)">
-                        <select id="status">
-                            <option value="TO_READ">Okunacak</option>
-                                <option value="READING">Okunuyor</option>
-                                    <option value="READ">Okundu</option>
-                                      </select>
-                                        <button type="submit">Kitap Ekle</button>
-                                        </form>
+                      <div id="loginBox">
+                        <h3>Giriş Yap</h3>
+                          <input type="text" id="loginUsername" placeholder="Kullanıcı adı">
+                            <input type="password" id="loginPassword" placeholder="Şifre">
+                              <button onclick="login()">Giriş Yap</button>
+                                <p id="loginError" style="color:red;"></p>
+                                </div>
 
-                                        <div id="bookList"></div>
+                                <div id="appBox">
+                                  <button id="logoutBtn" onclick="logout()">Çıkış Yap</button>
 
-                                        <script>
-                                        async function loadBooks() {
-                                          const res = await fetch('/books');
-                                            const books = await res.json();
-                                              const list = document.getElementById('bookList');
-                                                list.innerHTML = '';
-                                                  books.forEach(book => {
-                                                      const div = document.createElement('div');
-                                                          div.className = 'book';
-                                                              div.innerHTML = `
-                                                                    <div class="book-info">
-                                                                            <b>${book.title}</b>
-                                                                                    ${book.author} — ${book.genre || '-'} — ${book.status}
-                                                                                          </div>
-                                                                                                <button class="delete-btn" onclick="deleteBook(${book.id})">Sil</button>
-                                                                                                    `;
-                                                                                                        list.appendChild(div);
-                                                                                                          });
-                                                                                                          }
+                                    <form id="bookForm">
+                                        <input type="text" id="title" placeholder="Kitap adı" required>
+                                            <input type="text" id="author" placeholder="Yazar" required>
+                                                <input type="text" id="genre" placeholder="Tür (Roman, Bilim vb.)">
+                                                    <select id="status">
+                                                          <option value="TO_READ">Okunacak</option>
+                                                                <option value="READING">Okunuyor</option>
+                                                                      <option value="READ">Okundu</option>
+                                                                          </select>
+                                                                              <button type="submit">Kitap Ekle</button>
+                                                                                </form>
 
-                                                                                                          async function deleteBook(id) {
-                                                                                                            await fetch('/books/' + id, { method: 'DELETE' });
-                                                                                                              loadBooks();
-                                                                                                              }
+                                                                                  <div id="bookList"></div>
+                                                                                  </div>
 
-                                                                                                              document.getElementById('bookForm').addEventListener('submit', async (e) => {
-                                                                                                                e.preventDefault();
-                                                                                                                  const book = {
-                                                                                                                      title: document.getElementById('title').value,
-                                                                                                                          author: document.getElementById('author').value,
-                                                                                                                              genre: document.getElementById('genre').value,
-                                                                                                                                  status: document.getElementById('status').value
-                                                                                                                                    };
-                                                                                                                                      await fetch('/books', {
-                                                                                                                                          method: 'POST',
-                                                                                                                                              headers: { 'Content-Type': 'application/json' },
-                                                                                                                                                  body: JSON.stringify(book)
-                                                                                                                                                    });
-                                                                                                                                                      document.getElementById('bookForm').reset();
-                                                                                                                                                        loadBooks();
-                                                                                                                                                        });
+                                                                                  <script>
+                                                                                  function getToken() {
+                                                                                    return localStorage.getItem('token');
+                                                                                    }
 
-                                                                                                                                                        loadBooks();
-                                                                                                                                                        </script>
+                                                                                    async function login() {
+                                                                                      const username = document.getElementById('loginUsername').value;
+                                                                                        const password = document.getElementById('loginPassword').value;
 
-                                                                                                                                                        </body>
-                                                                                                                                                        </html>
+                                                                                          const res = await fetch('/auth/login', {
+                                                                                              method: 'POST',
+                                                                                                  headers: { 'Content-Type': 'application/json' },
+                                                                                                      body: JSON.stringify({ username, password })
+                                                                                                        });
+
+                                                                                                          if (!res.ok) {
+                                                                                                              document.getElementById('loginError').innerText = 'Giriş başarısız';
+                                                                                                                  return;
+                                                                                                                    }
+
+                                                                                                                      const token = await res.text();
+                                                                                                                        localStorage.setItem('token', token);
+                                                                                                                          showApp();
+                                                                                                                          }
+
+                                                                                                                          function logout() {
+                                                                                                                            localStorage.removeItem('token');
+                                                                                                                              document.getElementById('loginBox').style.display = 'block';
+                                                                                                                                document.getElementById('appBox').style.display = 'none';
+                                                                                                                                }
+
+                                                                                                                                function showApp() {
+                                                                                                                                  document.getElementById('loginBox').style.display = 'none';
+                                                                                                                                    document.getElementById('appBox').style.display = 'block';
+                                                                                                                                      loadBooks();
+                                                                                                                                      }
+
+                                                                                                                                      async function loadBooks() {
+                                                                                                                                        const res = await fetch('/books', {
+                                                                                                                                            headers: { 'Authorization': 'Bearer ' + getToken() }
+                                                                                                                                              });
+                                                                                                                                                if (!res.ok) { logout(); return; }
+                                                                                                                                                  const books = await res.json();
+                                                                                                                                                    const list = document.getElementById('bookList');
+                                                                                                                                                      list.innerHTML = '';
+                                                                                                                                                        books.forEach(book => {
+                                                                                                                                                            const div = document.createElement('div');
+                                                                                                                                                                div.className = 'book';
+                                                                                                                                                                    div.innerHTML = `
+                                                                                                                                                                          <div class="book-info">
+                                                                                                                                                                                  <b>${book.title}</b>
+                                                                                                                                                                                          ${book.author} — ${book.genre || '-'} — ${book.status}
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                      <button class="delete-btn" onclick="deleteBook(${book.id})">Sil</button>
+                                                                                                                                                                                                          `;
+                                                                                                                                                                                                              list.appendChild(div);
+                                                                                                                                                                                                                });
+                                                                                                                                                                                                                }
+
+                                                                                                                                                                                                                async function deleteBook(id) {
+                                                                                                                                                                                                                  await fetch('/books/' + id, {
+                                                                                                                                                                                                                      method: 'DELETE',
+                                                                                                                                                                                                                          headers: { 'Authorization': 'Bearer ' + getToken() }
+                                                                                                                                                                                                                            });
+                                                                                                                                                                                                                              loadBooks();
+                                                                                                                                                                                                                              }
+
+                                                                                                                                                                                                                              document.getElementById('bookForm').addEventListener('submit', async (e) => {
+                                                                                                                                                                                                                                e.preventDefault();
+                                                                                                                                                                                                                                  const book = {
+                                                                                                                                                                                                                                      title: document.getElementById('title').value,
+                                                                                                                                                                                                                                          author: document.getElementById('author').value,
+                                                                                                                                                                                                                                              genre: document.getElementById('genre').value,
+                                                                                                                                                                                                                                                  status: document.getElementById('status').value
+                                                                                                                                                                                                                                                    };
+                                                                                                                                                                                                                                                      await fetch('/books', {
+                                                                                                                                                                                                                                                          method: 'POST',
+                                                                                                                                                                                                                                                              headers: {
+                                                                                                                                                                                                                                                                    'Content-Type': 'application/json',
+                                                                                                                                                                                                                                                                          'Authorization': 'Bearer ' + getToken()
+                                                                                                                                                                                                                                                                              },
+                                                                                                                                                                                                                                                                                  body: JSON.stringify(book)
+                                                                                                                                                                                                                                                                                    });
+                                                                                                                                                                                                                                                                                      document.getElementById('bookForm').reset();
+                                                                                                                                                                                                                                                                                        loadBooks();
+                                                                                                                                                                                                                                                                                        });
+
+                                                                                                                                                                                                                                                                                        // Sayfa açılınca token varsa direkt uygulamayı göster
+                                                                                                                                                                                                                                                                                        if (getToken()) {
+                                                                                                                                                                                                                                                                                          showApp();
+                                                                                                                                                                                                                                                                                          }
+                                                                                                                                                                                                                                                                                          </script>
+
+                                                                                                                                                                                                                                                                                          </body>
+                                                                                                                                                                                                                                                                                          </html>
