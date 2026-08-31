@@ -10,7 +10,7 @@
   :root {
     --bg: #F5F6F4;
     --surface: #FFFFFF;
-    --ink: #5A0E27;
+    --ink: #14171C;
     --ink-soft: #6B7280;
     --border: #E3E5E1;
     --accent: #2F5CFF;
@@ -283,6 +283,23 @@
   }
   #detailPanel button.delete:hover { background: #FBEAE8; }
 
+  .status-select {
+    width: auto;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-radius: 999px;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'><path d='M0 0l5 6 5-6z' fill='white'/></svg>");
+    padding-right: 26px;
+  }
+
   @media (max-width: 720px) {
     .sidebar { position: static; width: auto; flex-direction: row; align-items: center; padding: 16px 20px; }
     .sidebar .sub { display: none; }
@@ -322,7 +339,7 @@
 <div id="appShell">
   <div class="sidebar">
     <div class="wordmark">Kitap<br>Kütüphanem</div>
-    <div class="sub">Kişisel Raf</div>
+    <div class="sub">kişisel raf</div>
     <div class="user-block">
       <div class="name" id="sidebarUsername"></div>
       <button onclick="logout()">Çıkış yap</button>
@@ -365,7 +382,7 @@
       <div class="meta" id="detailMeta"></div>
     </div>
     <div class="actions">
-      <span class="status-pill" id="detailStatus"></span>
+      <select id="detailStatus" class="status-select"></select>
       <button class="delete" id="detailDelete">Sil</button>
     </div>
   </div>
@@ -480,11 +497,26 @@
     if (!book) return;
     document.getElementById('detailTitle').innerText = book.title;
     document.getElementById('detailMeta').innerText = book.author + (book.genre ? ' · ' + book.genre : '');
-    const pill = document.getElementById('detailStatus');
-    pill.innerText = statusLabel[book.status] || book.status;
-    pill.style.background = statusColorVar[book.status] || 'var(--ink-soft)';
+
+    const select = document.getElementById('detailStatus');
+    select.innerHTML = Object.keys(statusLabel)
+      .map(key => `<option value="${key}" ${key === book.status ? 'selected' : ''}>${statusLabel[key]}</option>`)
+      .join('');
+    select.style.background = statusColorVar[book.status] || 'var(--ink-soft)';
+    select.onchange = () => updateStatus(book.id, select.value);
+
     document.getElementById('detailDelete').onclick = () => deleteBook(book.id);
     document.getElementById('detailPanel').classList.add('open');
+  }
+
+  async function updateStatus(id, status) {
+    const res = await fetch('/books/' + id + '/status', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify({ status })
+    });
+    if (!res.ok) { return; }
+    await loadBooks();
   }
 
   function closeDetail() {
