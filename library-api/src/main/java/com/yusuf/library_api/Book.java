@@ -16,6 +16,7 @@ public class Book {
     private String author;
     private String genre;
     private String status; // "READ", "READING", "TO_READ"
+    private String owner; // kitabı ekleyen kullanıcının kullanıcı adı
 
     // Getters ve Setters
     public Long getId() { return id; }
@@ -32,4 +33,7 @@ public class Book {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getOwner() { return owner; }
+    public void setOwner(String owner) { this.owner = owner; }
 }

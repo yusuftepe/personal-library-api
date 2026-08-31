@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -21,30 +22,43 @@ public class BookController {
     @Autowired
     private BookRepository bookRepository;
 
+    private String currentUsername() {
+        return SecurityContextHolder.getContext().getAuthentication().getName();
+    }
+
+    private Book findOwnedOrThrow(Long id) {
+        Book book = bookRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı"));
+        if (!currentUsername().equals(book.getOwner())) {
+            // Var olan ama başkasına ait bir kitabı 404 gibi davranarak gizliyoruz,
+            // böylece hangi id'lerin dolu olduğu dışarıdan anlaşılamaz.
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı");
+        }
+        return book;
+    }
+
     @GetMapping
     public List<Book> getAllBooks() {
-        return bookRepository.findAll();
+        return bookRepository.findByOwner(currentUsername());
     }
 
     @PostMapping
     public Book addBook(@RequestBody Book book) {
+        book.setOwner(currentUsername());
         return bookRepository.save(book);
     }
 
     @PutMapping("/{id}/status")
     public Book updateStatus(@PathVariable Long id, @RequestBody StatusUpdateRequest request) {
-        Book book = bookRepository.findById(id)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı"));
+        Book book = findOwnedOrThrow(id);
         book.setStatus(request.getStatus());
         return bookRepository.save(book);
     }
 
     @DeleteMapping("/{id}")
     public void deleteBook(@PathVariable Long id) {
-        if (!bookRepository.existsById(id)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Kitap bulunamadı");
-        }
-        bookRepository.deleteById(id);
+        Book book = findOwnedOrThrow(id);
+        bookRepository.delete(book);
     }
 
     public static class StatusUpdateRequest {
