@@ -2,143 +2,523 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Kitap Kütüphanem</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 16px; }
-    h1 { font-size: 22px; }
-      form { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-        input, select, button { padding: 8px; font-size: 14px; }
-          button { cursor: pointer; }
-            .book { border: 1px solid #ccc; border-radius: 6px; padding: 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-              .book-info b { display: block; }
-                .delete-btn { background: #e74c3c; color: white; border: none; border-radius: 4px; padding: 6px 10px; }
-                  #loginBox { border: 1px solid #ccc; border-radius: 6px; padding: 16px; margin-bottom: 24px; }
-                    #appBox { display: none; }
-                      #logoutBtn { background: #555; color: white; border: none; border-radius: 4px; padding: 6px 10px; margin-bottom: 16px; }
-                      </style>
-                      </head>
-                      <body>
+  :root {
+    --bg: #F5F6F4;
+    --surface: #FFFFFF;
+    --ink: #5A0E27;
+    --ink-soft: #6B7280;
+    --border: #E3E5E1;
+    --accent: #2F5CFF;
+    --to-read: #64748B;
+    --reading: #2F5CFF;
+    --read: #0F766E;
+  }
 
-                      <h1>📚 Kitap Kütüphanem</h1>
+  * { box-sizing: border-box; }
 
-                      <div id="loginBox">
-                        <h3>Giriş Yap</h3>
-                          <input type="text" id="loginUsername" placeholder="Kullanıcı adı">
-                            <input type="password" id="loginPassword" placeholder="Şifre">
-                              <button onclick="login()">Giriş Yap</button>
-                                <p id="loginError" style="color:red;"></p>
-                                </div>
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
 
-                                <div id="appBox">
-                                  <button id="logoutBtn" onclick="logout()">Çıkış Yap</button>
+  h1, h2, h3, .display { font-family: 'Space Grotesk', sans-serif; }
 
-                                    <form id="bookForm">
-                                        <input type="text" id="title" placeholder="Kitap adı" required>
-                                            <input type="text" id="author" placeholder="Yazar" required>
-                                                <input type="text" id="genre" placeholder="Tür (Roman, Bilim vb.)">
-                                                    <select id="status">
-                                                          <option value="TO_READ">Okunacak</option>
-                                                                <option value="READING">Okunuyor</option>
-                                                                      <option value="READ">Okundu</option>
-                                                                          </select>
-                                                                              <button type="submit">Kitap Ekle</button>
-                                                                                </form>
+  /* ---------- Auth screen ---------- */
+  #authScreen {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
 
-                                                                                  <div id="bookList"></div>
-                                                                                  </div>
+  #authScreen::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+  }
 
-                                                                                  <script>
-                                                                                  function getToken() {
-                                                                                    return localStorage.getItem('token');
-                                                                                    }
+  .wordmark {
+    font-weight: 700;
+    font-size: 28px;
+    letter-spacing: -0.02em;
+    margin-bottom: 40px;
+  }
 
-                                                                                    async function login() {
-                                                                                      const username = document.getElementById('loginUsername').value;
-                                                                                        const password = document.getElementById('loginPassword').value;
+  #authForm {
+    width: 100%;
+    max-width: 340px;
+  }
 
-                                                                                          const res = await fetch('/auth/login', {
-                                                                                              method: 'POST',
-                                                                                                  headers: { 'Content-Type': 'application/json' },
-                                                                                                      body: JSON.stringify({ username, password })
-                                                                                                        });
+  #authForm h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0 0 24px;
+  }
 
-                                                                                                          if (!res.ok) {
-                                                                                                              document.getElementById('loginError').innerText = 'Giriş başarısız';
-                                                                                                                  return;
-                                                                                                                    }
+  .field { margin-bottom: 18px; }
 
-                                                                                                                      const token = await res.text();
-                                                                                                                        localStorage.setItem('token', token);
-                                                                                                                          showApp();
-                                                                                                                          }
+  .field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
 
-                                                                                                                          function logout() {
-                                                                                                                            localStorage.removeItem('token');
-                                                                                                                              document.getElementById('loginBox').style.display = 'block';
-                                                                                                                                document.getElementById('appBox').style.display = 'none';
-                                                                                                                                }
+  input, select {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    padding: 11px 12px;
+    color: var(--ink);
+  }
+  input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(47, 92, 255, 0.12);
+  }
 
-                                                                                                                                function showApp() {
-                                                                                                                                  document.getElementById('loginBox').style.display = 'none';
-                                                                                                                                    document.getElementById('appBox').style.display = 'block';
-                                                                                                                                      loadBooks();
-                                                                                                                                      }
+  .btn {
+    background: var(--ink);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-family: inherit;
+    font-weight: 500;
+    font-size: 14px;
+    padding: 11px 16px;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--accent); }
+  .btn-block { width: 100%; }
 
-                                                                                                                                      async function loadBooks() {
-                                                                                                                                        const res = await fetch('/books', {
-                                                                                                                                            headers: { 'Authorization': 'Bearer ' + getToken() }
-                                                                                                                                              });
-                                                                                                                                                if (!res.ok) { logout(); return; }
-                                                                                                                                                  const books = await res.json();
-                                                                                                                                                    const list = document.getElementById('bookList');
-                                                                                                                                                      list.innerHTML = '';
-                                                                                                                                                        books.forEach(book => {
-                                                                                                                                                            const div = document.createElement('div');
-                                                                                                                                                                div.className = 'book';
-                                                                                                                                                                    div.innerHTML = `
-                                                                                                                                                                          <div class="book-info">
-                                                                                                                                                                                  <b>${book.title}</b>
-                                                                                                                                                                                          ${book.author} — ${book.genre || '-'} — ${book.status}
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                      <button class="delete-btn" onclick="deleteBook(${book.id})">Sil</button>
-                                                                                                                                                                                                          `;
-                                                                                                                                                                                                              list.appendChild(div);
-                                                                                                                                                                                                                });
-                                                                                                                                                                                                                }
+  #formError {
+    font-size: 13px;
+    min-height: 18px;
+    margin-top: 12px;
+    color: #C0362C;
+  }
 
-                                                                                                                                                                                                                async function deleteBook(id) {
-                                                                                                                                                                                                                  await fetch('/books/' + id, {
-                                                                                                                                                                                                                      method: 'DELETE',
-                                                                                                                                                                                                                          headers: { 'Authorization': 'Bearer ' + getToken() }
-                                                                                                                                                                                                                            });
-                                                                                                                                                                                                                              loadBooks();
-                                                                                                                                                                                                                              }
+  .switch-mode { text-align: center; margin-top: 18px; font-size: 13px; color: var(--ink-soft); }
+  .switch-mode button {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: inherit;
+    font-weight: 500;
+    cursor: pointer;
+    font-size: 13px;
+    padding: 0;
+  }
 
-                                                                                                                                                                                                                              document.getElementById('bookForm').addEventListener('submit', async (e) => {
-                                                                                                                                                                                                                                e.preventDefault();
-                                                                                                                                                                                                                                  const book = {
-                                                                                                                                                                                                                                      title: document.getElementById('title').value,
-                                                                                                                                                                                                                                          author: document.getElementById('author').value,
-                                                                                                                                                                                                                                              genre: document.getElementById('genre').value,
-                                                                                                                                                                                                                                                  status: document.getElementById('status').value
-                                                                                                                                                                                                                                                    };
-                                                                                                                                                                                                                                                      await fetch('/books', {
-                                                                                                                                                                                                                                                          method: 'POST',
-                                                                                                                                                                                                                                                              headers: {
-                                                                                                                                                                                                                                                                    'Content-Type': 'application/json',
-                                                                                                                                                                                                                                                                          'Authorization': 'Bearer ' + getToken()
-                                                                                                                                                                                                                                                                              },
-                                                                                                                                                                                                                                                                                  body: JSON.stringify(book)
-                                                                                                                                                                                                                                                                                    });
-                                                                                                                                                                                                                                                                                      document.getElementById('bookForm').reset();
-                                                                                                                                                                                                                                                                                        loadBooks();
-                                                                                                                                                                                                                                                                                        });
+  /* ---------- App shell ---------- */
+  #appShell { display: none; min-height: 100vh; }
 
-                                                                                                                                                                                                                                                                                        // Sayfa açılınca token varsa direkt uygulamayı göster
-                                                                                                                                                                                                                                                                                        if (getToken()) {
-                                                                                                                                                                                                                                                                                          showApp();
-                                                                                                                                                                                                                                                                                          }
-                                                                                                                                                                                                                                                                                          </script>
+  .sidebar {
+    width: 220px;
+    background: var(--ink);
+    color: #fff;
+    padding: 28px 20px;
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    top: 0; bottom: 0; left: 0;
+  }
 
-                                                                                                                                                                                                                                                                                          </body>
-                                                                                                                                                                                                                                                                                          </html>
+  .sidebar .wordmark { color: #fff; font-size: 20px; margin-bottom: 4px; }
+  .sidebar .sub { color: #9099A6; font-size: 12px; margin-bottom: 40px; }
+
+  .user-block {
+    margin-top: auto;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255,255,255,0.12);
+  }
+  .user-block .name { font-size: 13px; font-weight: 500; margin-bottom: 10px; }
+  .user-block button {
+    background: none;
+    border: 1px solid rgba(255,255,255,0.3);
+    color: #fff;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    padding: 7px 12px;
+    cursor: pointer;
+    width: 100%;
+  }
+  .user-block button:hover { background: rgba(255,255,255,0.1); }
+
+  main {
+    margin-left: 220px;
+    flex: 1;
+    padding: 40px 48px 100px;
+    max-width: 900px;
+  }
+
+  main h2 {
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0 0 24px;
+  }
+
+  .add-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .add-row .field { margin-bottom: 0; flex: 1 1 160px; }
+  .add-row .field.narrow { flex: 0 1 130px; }
+  .add-row .btn { flex: 0 0 auto; height: 42px; }
+
+  h3.section-title {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--ink-soft);
+    margin: 0 0 16px;
+    text-transform: none;
+  }
+
+  /* ---------- Spine grid ---------- */
+  .shelf {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: flex-end;
+    min-height: 150px;
+  }
+
+  .spine {
+    width: 46px;
+    height: 150px;
+    border-radius: 4px;
+    color: #fff;
+    display: flex;
+    align-items: flex-end;
+    padding: 12px 0;
+    justify-content: center;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: transform 0.12s ease;
+  }
+  .spine:hover { transform: translateY(-4px); }
+  .spine.selected { border-color: var(--ink); }
+
+  .spine.status-TO_READ { background: var(--to-read); }
+  .spine.status-READING { background: var(--reading); }
+  .spine.status-READ    { background: var(--read); }
+
+  .spine .spine-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
+    font-weight: 500;
+    max-height: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .empty-shelf {
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  /* ---------- Detail panel ---------- */
+  #detailPanel {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 244px;
+    right: 24px;
+    max-width: 620px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    box-shadow: 0 8px 24px rgba(20, 23, 28, 0.12);
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  #detailPanel.open { display: flex; }
+  #detailPanel .info .title { font-weight: 600; font-size: 15px; }
+  #detailPanel .info .meta { font-size: 13px; color: var(--ink-soft); margin-top: 2px; }
+  #detailPanel .actions { display: flex; gap: 8px; align-items: center; }
+  #detailPanel .status-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 999px;
+    color: #fff;
+  }
+  #detailPanel button.delete {
+    background: none;
+    border: 1px solid var(--border);
+    color: #C0362C;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 13px;
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  #detailPanel button.delete:hover { background: #FBEAE8; }
+
+  @media (max-width: 720px) {
+    .sidebar { position: static; width: auto; flex-direction: row; align-items: center; padding: 16px 20px; }
+    .sidebar .sub { display: none; }
+    .sidebar .wordmark { margin-bottom: 0; }
+    .user-block { margin-top: 0; margin-left: auto; border: none; padding: 0; display: flex; align-items: center; gap: 10px; }
+    .user-block .name { margin-bottom: 0; }
+    .user-block button { width: auto; }
+    #appShell { display: flex; flex-direction: column; }
+    main { margin-left: 0; padding: 28px 20px 100px; }
+    #detailPanel { left: 20px; right: 20px; max-width: none; flex-wrap: wrap; }
+  }
+</style>
+</head>
+<body>
+
+<div id="authScreen">
+  <div class="wordmark">Kitap Kütüphanem</div>
+  <div id="authForm">
+    <h2 id="authTitle">Giriş yap</h2>
+    <div class="field">
+      <label for="authUsername">Kullanıcı adı</label>
+      <input type="text" id="authUsername" autocomplete="username">
+    </div>
+    <div class="field">
+      <label for="authPassword">Şifre</label>
+      <input type="password" id="authPassword" autocomplete="current-password">
+    </div>
+    <button class="btn btn-block" id="authSubmit" onclick="submitAuth()">Giriş yap</button>
+    <p id="formError"></p>
+    <div class="switch-mode">
+      <span id="switchPrompt">Hesabın yok mu?</span>
+      <button onclick="toggleMode()" id="switchBtn">Kayıt ol</button>
+    </div>
+  </div>
+</div>
+
+<div id="appShell">
+  <div class="sidebar">
+    <div class="wordmark">Kitap<br>Kütüphanem</div>
+    <div class="sub">Kişisel Raf</div>
+    <div class="user-block">
+      <div class="name" id="sidebarUsername"></div>
+      <button onclick="logout()">Çıkış yap</button>
+    </div>
+  </div>
+
+  <main>
+    <h2>Rafa ekle</h2>
+    <form id="bookForm" class="add-row">
+      <div class="field">
+        <label for="title">Kitap adı</label>
+        <input type="text" id="title" required>
+      </div>
+      <div class="field">
+        <label for="author">Yazar</label>
+        <input type="text" id="author" required>
+      </div>
+      <div class="field narrow">
+        <label for="genre">Tür</label>
+        <input type="text" id="genre" placeholder="Roman...">
+      </div>
+      <div class="field narrow">
+        <label for="status">Durum</label>
+        <select id="status">
+          <option value="TO_READ">Okunacak</option>
+          <option value="READING">Okunuyor</option>
+          <option value="READ">Okundu</option>
+        </select>
+      </div>
+      <button type="submit" class="btn">Ekle</button>
+    </form>
+
+    <h3 class="section-title">Rafım</h3>
+    <div class="shelf" id="bookList"></div>
+  </main>
+
+  <div id="detailPanel">
+    <div class="info">
+      <div class="title" id="detailTitle"></div>
+      <div class="meta" id="detailMeta"></div>
+    </div>
+    <div class="actions">
+      <span class="status-pill" id="detailStatus"></span>
+      <button class="delete" id="detailDelete">Sil</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let mode = 'login';
+  let books = [];
+  let selectedId = null;
+
+  function getToken() { return localStorage.getItem('token'); }
+
+  function toggleMode() {
+    mode = mode === 'login' ? 'register' : 'login';
+    document.getElementById('authTitle').innerText = mode === 'login' ? 'Giriş yap' : 'Kayıt ol';
+    document.getElementById('authSubmit').innerText = mode === 'login' ? 'Giriş yap' : 'Kayıt ol';
+    document.getElementById('switchPrompt').innerText = mode === 'login' ? 'Hesabın yok mu?' : 'Zaten hesabın var mı?';
+    document.getElementById('switchBtn').innerText = mode === 'login' ? 'Kayıt ol' : 'Giriş yap';
+    document.getElementById('formError').innerText = '';
+  }
+
+  async function submitAuth() {
+    const username = document.getElementById('authUsername').value;
+    const password = document.getElementById('authPassword').value;
+    const errorEl = document.getElementById('formError');
+    errorEl.style.color = '#C0362C';
+    errorEl.innerText = '';
+
+    if (mode === 'register') {
+      const res = await fetch('/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      if (!res.ok) {
+        errorEl.innerText = 'Kayıt başarısız, kullanıcı adı alınmış olabilir';
+        return;
+      }
+      toggleMode();
+      errorEl.style.color = 'var(--read)';
+      errorEl.innerText = 'Kayıt tamam, şimdi giriş yapabilirsin';
+      return;
+    }
+
+    const res = await fetch('/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password })
+    });
+    if (!res.ok) {
+      errorEl.innerText = 'Kullanıcı adı veya şifre hatalı';
+      return;
+    }
+    const token = await res.text();
+    localStorage.setItem('token', token);
+    localStorage.setItem('username', username);
+    showApp();
+  }
+
+  function logout() {
+    localStorage.removeItem('token');
+    localStorage.removeItem('username');
+    document.getElementById('authScreen').style.display = 'flex';
+    document.getElementById('appShell').style.display = 'none';
+    closeDetail();
+  }
+
+  function showApp() {
+    document.getElementById('authScreen').style.display = 'none';
+    document.getElementById('appShell').style.display = 'flex';
+    document.getElementById('sidebarUsername').innerText = localStorage.getItem('username') || '';
+    loadBooks();
+  }
+
+  const statusLabel = { TO_READ: 'Okunacak', READING: 'Okunuyor', READ: 'Okundu' };
+  const statusColorVar = { TO_READ: 'var(--to-read)', READING: 'var(--reading)', READ: 'var(--read)' };
+
+  async function loadBooks() {
+    const res = await fetch('/books', { headers: { 'Authorization': 'Bearer ' + getToken() } });
+    if (!res.ok) { logout(); return; }
+    books = await res.json();
+    renderShelf();
+  }
+
+  function renderShelf() {
+    const list = document.getElementById('bookList');
+    list.innerHTML = '';
+    if (books.length === 0) {
+      list.innerHTML = '<p class="empty-shelf">Raf henüz boş — yukarıdan ilk kitabını ekle.</p>';
+      closeDetail();
+      return;
+    }
+    books.forEach(book => {
+      const div = document.createElement('div');
+      div.className = 'spine status-' + book.status + (book.id === selectedId ? ' selected' : '');
+      div.onclick = () => selectBook(book.id);
+      div.innerHTML = `<span class="spine-title">${book.title}</span>`;
+      list.appendChild(div);
+    });
+    if (selectedId !== null && books.find(b => b.id === selectedId)) {
+      openDetail(selectedId);
+    }
+  }
+
+  function selectBook(id) {
+    selectedId = id;
+    renderShelf();
+  }
+
+  function openDetail(id) {
+    const book = books.find(b => b.id === id);
+    if (!book) return;
+    document.getElementById('detailTitle').innerText = book.title;
+    document.getElementById('detailMeta').innerText = book.author + (book.genre ? ' · ' + book.genre : '');
+    const pill = document.getElementById('detailStatus');
+    pill.innerText = statusLabel[book.status] || book.status;
+    pill.style.background = statusColorVar[book.status] || 'var(--ink-soft)';
+    document.getElementById('detailDelete').onclick = () => deleteBook(book.id);
+    document.getElementById('detailPanel').classList.add('open');
+  }
+
+  function closeDetail() {
+    selectedId = null;
+    document.getElementById('detailPanel').classList.remove('open');
+  }
+
+  async function deleteBook(id) {
+    await fetch('/books/' + id, {
+      method: 'DELETE',
+      headers: { 'Authorization': 'Bearer ' + getToken() }
+    });
+    closeDetail();
+    loadBooks();
+  }
+
+  document.getElementById('bookForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const book = {
+      title: document.getElementById('title').value,
+      author: document.getElementById('author').value,
+      genre: document.getElementById('genre').value,
+      status: document.getElementById('status').value
+    };
+    await fetch('/books', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + getToken() },
+      body: JSON.stringify(book)
+    });
+    document.getElementById('bookForm').reset();
+    loadBooks();
+  });
+
+  if (getToken()) { showApp(); }
+</script>
+</body>
+</html>
